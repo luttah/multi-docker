@@ -1,0 +1,26 @@
+sudo: required
+services:
+  - docker
+
+before_install:
+  - docker build -t luttah/react-test -f ./client/Dockerfile.dev ./client
+
+script:
+  - docker run luttah/react-test npm test -- --coverage
+
+# we now go into each folder and create a production
+# image using the Docker file within these projects
+after_success:
+  - docker build -t luttah/multi-client ./client
+  - docker build -t luttah/multi-nginx ./nginx
+  - docker build -t luttah/multi-server ./server
+  - docker build -t luttah/multi-worker ./worker
+
+# After building images successfully
+# login to docker CLI
+  - echo "$DOCKER_PASSWORD" | docker login -u "$DOCKER_ID" --password-stdin
+# push images to docker hub
+  - docker push luttah/multi-client
+  - docker push luttah/multi-nginx
+  - docker push luttah/multi-server
+  - docker push luttah/multi-worker
